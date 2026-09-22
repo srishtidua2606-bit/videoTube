@@ -6,10 +6,11 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { fullName, email, username, password } = req.body
+    const { fullname, email, username, password } = req.body
 
-    // if(fullName?.trim() === "")
-    if ([fullName, username, email, password].some((field) => field?.trim === "")) {
+    console.log(req.body)
+    // if(fullname?.trim() === "")
+    if ([fullname, username, email, password].some((field) => field?.trim === "")) {
         throw new ApiError(400, "fullName is required.")
     }
     const existedUser = await User.findOne({
@@ -19,20 +20,40 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User with email or username already exists");
 
     }
-    const avatarLocalPath = req.files?.avatar[0]?.path
-    const coverImgLocalPath = req.files?.coverImage[0]?.path
-    
+    const avatarLocalPath = req.files?.avatar?.[0]?.path
+    const coverImgLocalPath = req.files?.coverImage?.[0]?.path
+    console.log(avatarLocalPath, "\n", coverImgLocalPath)
     if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is missing.")
 
 }
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
-    let coverImg = ""
-    if (coverImgLocalPath){
-         coverImg = await uploadOnCloudinary(coverImgLocalPath)
+    // const avatar = await uploadOnCloudinary(avatarLocalPath)
+    // let coverImg = ""
+    // if (coverImgLocalPath){
+    //      coverImg = await uploadOnCloudinary(coverImgLocalPath)
+    // }
+
+    //refractoring code
+    let avatar;
+    try{
+        avatar  = await uploadOnCloudinary(avatarLocalPath)
+        // console.log("Uploaded avatar", avatar)
+    }catch(error){
+        // console.log("Error uploading", error)
+        throw new ApiError(400, "Avatar file upload failed.")
+
+    }
+    let coverImg;
+    try{
+        coverImg  = await uploadOnCloudinary(coverImgLocalPath)
+        // console.log("Uploaded cover image", coverImg)
+    }catch(error){
+        // console.log("Error uploading", error)
+        throw new ApiError(400, "coverImg file upload failed.")
+
     }
     const user = await User.create({
-        fullName,
+        fullname,
         username,
         email,
         password,
@@ -44,7 +65,7 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!createdUser){
         throw new ApiError(500, "Something went wrong while registring a user.")
     }
-    return res.status(201).json(new ApiError(201, createdUser, "User created"))
+    return res.status(201).json(new ApiResponse(201, createdUser, "User created"))
 
 })
 

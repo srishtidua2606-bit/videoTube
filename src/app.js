@@ -26,5 +26,5 @@ app.use("/api/v1/users", userRouter)
 
 
 
-app.use(errroHandler)
+// app.use(errroHandler)
 export { app };
