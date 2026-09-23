@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.models.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -52,7 +52,8 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "coverImg file upload failed.")
 
     }
-    const user = await User.create({
+    try {
+        const user = await User.create({
         fullname,
         username,
         email,
@@ -65,7 +66,17 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!createdUser){
         throw new ApiError(500, "Something went wrong while registring a user.")
     }
-    return res.status(201).json(new ApiResponse(201, createdUser, "User created"))
+    return res.status(201).json(new ApiResponse(201, createdUser, "User registered successfully"))
+    } catch (error) {
+        console.log("User creation failed")
+        if ( avatar){
+            await deleteFromCloudinary(avatar.public_id)
+        }
+        if ( coverImg){
+            await deleteFromCloudinary(coverImg.public_id)
+        }
+        throw new ApiError(500, "Something went wrong while registering a user and images were deleted")
+    }
 
 })
 
