@@ -14,8 +14,8 @@ const generateAccessTokenAndRefreshToken = async (userId) => {
     if (!user) {
         throw new ApiError(400, "User does not already exists.")
     }
-    const accessToken = user.generateAccessToken()
-    const refreshToken = user.generateRefreshToken()
+    const accessToken = await user.generateAccessToken()
+    const refreshToken = await user.generateRefreshToken()
     user.refreshToken = refreshToken
     await user.save({ validateBeforeSave: false })
 
