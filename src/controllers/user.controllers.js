@@ -1,4 +1,5 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
+import mongoose from "mongoose";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.models.js";
@@ -25,7 +26,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     console.log(req.body)
     // if(fullname?.trim() === "")
-    if ([fullname, username, email, password].some((field) => field?.trim === "")) {
+    if ([fullname, username, email, password].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "Credentials are required.")
     }
     const existedUser = await User.findOne({
@@ -126,7 +127,7 @@ const loginUser = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .cookie("accessToken", accessToken, options)
-        .cookie("accessToken", refreshToken, options)
+        .cookie("refreshToken", refreshToken, options)
         .json(new ApiResponse(200, {
             user: loggedInUser,
             accessToken, refreshToken
@@ -142,7 +143,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         const decodedToken = jwt.verify(
             incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET
         )
-        const user = await user.findById(decodedToken?._id)
+        const user = await User.findById(decodedToken?._id)
         if (!user) {
             throw new ApiError(401, "Invalid refresh token.")
         }
@@ -289,7 +290,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     if (!username?.trim()) {
         throw new ApiError(400, "Username is required.")
     }
-    const channel = User.aggregate([
+    const channel = await User.aggregate([
         {
             $match: {
                 username: username?.toLowerCase()
